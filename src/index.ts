@@ -1,5 +1,6 @@
 import { init, getDataUrl, getImage } from "./dropzone";
 import ColorThief from "../lib/color-thief";
+import Rgbaster from "../lib/rgbaster";
 
 const imageListContainer = document.querySelector(".image-list");
 
@@ -15,7 +16,7 @@ const createItem = (rgbColor: string, libraryName: string): HTMLLIElement => {
 init(".drop-zone", (file: File) => {
   getDataUrl(file)
     .then((src: string) => getImage(src))
-    .then((img: HTMLImageElement) => {
+    .then(async (img: HTMLImageElement) => {
       const container = document.createElement("div");
       const list = document.createElement("ul");
 
@@ -28,6 +29,10 @@ init(".drop-zone", (file: File) => {
         {
           color: ColorThief(img),
           name: "color-thief"
+        },
+        {
+          color: await Rgbaster(img),
+          name: "rgbaster"
         }
       ];
 
