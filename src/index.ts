@@ -28,7 +28,7 @@ init(".drop-zone", (file: File) => {
 
       const itemInfoList: { color: string; name: string }[] = [
         {
-          color: ColorThief(img),
+          color: await ColorThief(img),
           name: "color-thief"
         },
         {

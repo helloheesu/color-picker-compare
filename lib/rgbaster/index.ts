@@ -1,6 +1,7 @@
 import Rgbaster from "rgbaster";
+import { TgetColor } from "../type";
 
-const getColor = async (img: HTMLImageElement): Promise<string> => {
+const getColor: TgetColor = async img => {
   const result = await Rgbaster(img.src);
 
   return result[0].color;

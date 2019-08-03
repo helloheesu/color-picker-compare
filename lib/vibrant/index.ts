@@ -1,6 +1,7 @@
 import Vibrant = require("node-vibrant");
+import { TgetColor } from "../type";
 
-export const getColor = async (img: HTMLImageElement): Promise<string> => {
+const getColor: TgetColor = async img => {
   const palette = await Vibrant.from(img).getPalette();
   const color = palette.Vibrant.getRgb();
 
