@@ -11,7 +11,7 @@
       }
       .drop-zone {
         background-color: lightgray;
-        margin-bottom: 1em;
+        margin: 1em 0;
         padding: 1em;
       }
       .drop-zone p {
@@ -20,10 +20,15 @@
       .image-list img {
         width: 100%;
       }
+      .library-options {
+        display: flex;
+        justify-content: space-between;
+      }
     </style>
   </head>
   <body>
     <h1>🎊 Color Picker Contest 🎊</h1>
+    <div class="library-options"></div>
     <div class="drop-zone">
       <p>Drop Image Here</p>
     </div>

@@ -30,6 +30,29 @@ const getColor = async (
   };
 };
 
+const librarySelector = document.querySelector(".library-options");
+
+Object.keys(libraries).forEach((name: string) => {
+  const wrapper = document.createElement("div");
+
+  const id = `library-on-${name}`;
+
+  const input: HTMLInputElement = document.createElement("input");
+  input.type = "checkbox";
+  input.name = name;
+  input.id = id;
+  input.checked = true;
+
+  const label: HTMLLabelElement = document.createElement("label");
+  label.setAttribute("for", id);
+  label.innerText = name;
+
+  wrapper.appendChild(input);
+  wrapper.appendChild(label);
+
+  librarySelector.appendChild(wrapper);
+});
+
 init(".drop-zone", (file: File) => {
   getDataUrl(file)
     .then((src: string) => getImage(src))
@@ -42,7 +65,14 @@ init(".drop-zone", (file: File) => {
 
       imageListContainer.appendChild(container);
 
-      Object.keys(libraries).forEach(async name => {
+      const checkedInputList = librarySelector.querySelectorAll(
+        "input:checked"
+      );
+      const selectedLibraryList = Array.from(checkedInputList).map(
+        (i: HTMLInputElement) => i.name
+      );
+
+      selectedLibraryList.forEach(async name => {
         const { color, time } = await getColor(name, img);
         const item = createItem(color, name, time);
         list.appendChild(item);
