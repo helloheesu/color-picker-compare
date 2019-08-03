@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "parcel-bundler": "^1.12.3",
+    "rgbaster": "^2.1.1",
     "typescript": "^3.5.3"
   }
 }
