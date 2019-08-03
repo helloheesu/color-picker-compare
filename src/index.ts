@@ -1,17 +1,33 @@
 import { init, getDataUrl, getImage } from "./dropzone";
-import ColorThief from "../lib/color-thief";
-import Rgbaster from "../lib/rgbaster";
-import Vibrant from "../lib/vibrant";
+import { libraries } from "../lib";
 
 const imageListContainer = document.querySelector(".image-list");
 
-const createItem = (rgbColor: string, libraryName: string): HTMLLIElement => {
+const createItem = (
+  rgbColor: string,
+  libraryName: string,
+  time: number
+): HTMLLIElement => {
   const item = document.createElement("li");
 
   item.style.backgroundColor = rgbColor;
-  item.innerText = `${libraryName}: ${rgbColor}`;
+  item.innerText = `${libraryName} - ${time}: ${rgbColor}`;
 
   return item;
+};
+
+const getColor = async (
+  name: keyof typeof libraries,
+  img: HTMLImageElement
+): Promise<{ color: string; time: number }> => {
+  const before = performance.now();
+  const color = await libraries[name](img);
+  const after = performance.now();
+
+  return {
+    color,
+    time: after - before
+  };
 };
 
 init(".drop-zone", (file: File) => {
@@ -26,23 +42,9 @@ init(".drop-zone", (file: File) => {
 
       imageListContainer.appendChild(container);
 
-      const itemInfoList: { color: string; name: string }[] = [
-        {
-          color: await ColorThief(img),
-          name: "color-thief"
-        },
-        {
-          color: await Rgbaster(img),
-          name: "rgbaster"
-        },
-        {
-          color: await Vibrant(img),
-          name: "vibrant"
-        }
-      ];
-
-      itemInfoList.forEach(({ color, name }) => {
-        const item = createItem(color, name);
+      Object.keys(libraries).forEach(async name => {
+        const { color, time } = await getColor(name, img);
+        const item = createItem(color, name, time);
         list.appendChild(item);
       });
     })
