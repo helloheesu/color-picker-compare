@@ -8,7 +8,11 @@
     <style>
       .drop-zone {
         background-color: lightgray;
-        min-height: 100px;
+        margin-bottom: 1em;
+        padding: 1em;
+      }
+      .drop-zone p {
+        text-align: center;
       }
       .image-list img {
         width: 100%;
@@ -16,8 +20,9 @@
     </style>
   </head>
   <body>
-    Hello, World!
-    <div class="drop-zone"></div>
+    <div class="drop-zone">
+      <p>Drop Image Here</p>
+    </div>
     <div class="image-list"></div>
     <script src="./index.ts"></script>
   </body>

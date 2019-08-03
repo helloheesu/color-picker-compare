@@ -16,7 +16,13 @@ export const init = (
     }
     if (e.type === "drop") {
       e.preventDefault();
+
       const file = e.dataTransfer.files[0];
+
+      if (!file) {
+        return;
+      }
+
       callback(file);
     }
   }

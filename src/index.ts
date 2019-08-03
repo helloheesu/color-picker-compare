@@ -45,5 +45,8 @@ init(".drop-zone", (file: File) => {
         const item = createItem(color, name);
         list.appendChild(item);
       });
+    })
+    .catch(() => {
+      alert("inappropriate file");
     });
 });
