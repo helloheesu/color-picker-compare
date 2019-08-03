@@ -3,6 +3,15 @@ import ColorThief from "../lib/color-thief";
 
 const imageListContainer = document.querySelector(".image-list");
 
+const createItem = (rgbColor: string, libraryName: string): HTMLLIElement => {
+  const item = document.createElement("li");
+
+  item.style.backgroundColor = rgbColor;
+  item.innerText = `${libraryName}: ${rgbColor}`;
+
+  return item;
+};
+
 init(".drop-zone", (file: File) => {
   getDataUrl(file)
     .then((src: string) => getImage(src))
@@ -15,13 +24,16 @@ init(".drop-zone", (file: File) => {
 
       imageListContainer.appendChild(container);
 
-      const item = document.createElement("li");
-      const color: string = ColorThief.getColor(img).join(", ");
-      const backgroundColor = `rgb(${color})`;
+      const itemInfoList: { color: string; name: string }[] = [
+        {
+          color: ColorThief(img),
+          name: "color-thief"
+        }
+      ];
 
-      item.style.backgroundColor = backgroundColor;
-
-      list.appendChild(item);
-      item.innerText = `color-thief: ${color}`;
+      itemInfoList.forEach(({ color, name }) => {
+        const item = createItem(color, name);
+        list.appendChild(item);
+      });
     });
 });
