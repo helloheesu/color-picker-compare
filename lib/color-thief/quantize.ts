@@ -13,6 +13,8 @@
  * Licensed under the BSD License: http://www.opensource.org/licenses/bsd-license.php
  */
 
+import { Color } from "../../@types/image";
+
 const pv = {
   naturalOrder: function(a: number, b: number) {
     return a < b ? -1 : a > b ? 1 : 0;
@@ -287,7 +289,7 @@ var MMCQ = (function() {
   // histo (1-d array, giving the number of pixels in
   // each quantized region of color space), or null on error
 
-  function getHisto(pixels) {
+  function getHisto(pixels: Color[]) {
     var histosize = 1 << (3 * sigbits),
       histo = new Array(histosize),
       index,
@@ -304,7 +306,7 @@ var MMCQ = (function() {
     return histo;
   }
 
-  function vboxFromPixels(pixels, histo) {
+  function vboxFromPixels(pixels: Color[], histo) {
     var rmin = 1000000,
       rmax = 0,
       gmin = 1000000,
@@ -424,7 +426,7 @@ var MMCQ = (function() {
     return maxw == rw ? doCut("r") : maxw == gw ? doCut("g") : doCut("b");
   }
 
-  function quantize(pixels, maxcolors) {
+  function quantize(pixels: Color[], maxcolors) {
     // short-circuit
     if (!pixels.length || maxcolors < 2 || maxcolors > 256) {
       // console.log('wrong number of maxcolors');
