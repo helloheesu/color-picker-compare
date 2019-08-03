@@ -4,6 +4,9 @@
   "description": "Compare many color-picking libraries",
   "author": "helloheesu",
   "license": "ISC",
+  "scripts": {
+    "start": "parcel src/index.html --open"
+  },
   "devDependencies": {
     "parcel-bundler": "^1.12.3"
   }
