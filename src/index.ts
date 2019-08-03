@@ -1,6 +1,7 @@
 import { init, getDataUrl, getImage } from "./dropzone";
 import ColorThief from "../lib/color-thief";
 import Rgbaster from "../lib/rgbaster";
+import Vibrant from "../lib/vibrant";
 
 const imageListContainer = document.querySelector(".image-list");
 
@@ -33,6 +34,10 @@ init(".drop-zone", (file: File) => {
         {
           color: await Rgbaster(img),
           name: "rgbaster"
+        },
+        {
+          color: await Vibrant(img),
+          name: "vibrant"
         }
       ];
 
