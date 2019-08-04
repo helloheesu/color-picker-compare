@@ -79,6 +79,7 @@ init(".drop-zone", (file: File) => {
       });
     })
     .catch(() => {
+      // eslint-disable-next-line no-alert
       alert("inappropriate file");
     });
 });
