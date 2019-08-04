@@ -83,7 +83,8 @@ class PQueue<E> {
     this.sorted = false;
   }
 
-  private sort(): void {
+  sort(comparator?: CompareFunc<E>): void {
+    this.comparator = comparator || this.comparator;
     this.contents.sort(this.comparator);
     this.sorted = true;
   }
@@ -121,6 +122,10 @@ class PQueue<E> {
     }
     return this.contents;
   }
+
+  get length() {
+    return this.contents.length;
+  }
 }
 
 // 3d color space box
@@ -131,7 +136,7 @@ class VBox {
   _volume: number;
   _count_set: boolean;
   _count: number;
-  _avg: number[];
+  _avg: Color;
 
   constructor(
     private r1: number,
@@ -143,7 +148,7 @@ class VBox {
     private histo: Histo
   ) {}
 
-  volume(force): number {
+  volume(force?: any): number {
     if (!this._volume || force) {
       this._volume =
         (this.r2 - this.r1 + 1) *
@@ -154,7 +159,7 @@ class VBox {
     return this._volume;
   }
 
-  count(force) {
+  count(force?: any): number {
     if (!this._count_set || force) {
       let npix = 0;
 
@@ -174,7 +179,7 @@ class VBox {
     return this._count;
   }
 
-  copy() {
+  copy(): VBox {
     return new VBox(
       this.r1,
       this.r2,
@@ -186,7 +191,7 @@ class VBox {
     );
   }
 
-  avg(force) {
+  avg(force?: any): Color {
     if (!this._avg || force) {
       let ntot = 0;
       let mult = 1 << (8 - sigbits);
@@ -238,10 +243,14 @@ class VBox {
   }
 }
 
-var MMCQ = (function() {
-  // Color map
+// Color map
 
-  function CMap() {
+type CMapEntity = { vbox: VBox; color: Color };
+
+class CMap {
+  private vboxes: PQueue<CMapEntity>;
+
+  constructor() {
     this.vboxes = new PQueue(function(a, b) {
       return pv.naturalOrder(
         a.vbox.count() * a.vbox.volume(),
@@ -249,68 +258,82 @@ var MMCQ = (function() {
       );
     });
   }
-  CMap.prototype = {
-    push: function(vbox) {
-      this.vboxes.push({
-        vbox: vbox,
-        color: vbox.avg()
-      });
-    },
-    palette: function() {
-      return this.vboxes.map(function(vb) {
-        return vb.color;
-      });
-    },
-    size: function() {
-      return this.vboxes.size();
-    },
-    map: function(color) {
-      var vboxes = this.vboxes;
-      for (var i = 0; i < vboxes.size(); i++) {
-        if (vboxes.peek(i).vbox.contains(color)) {
-          return vboxes.peek(i).color;
-        }
-      }
-      return this.nearest(color);
-    },
-    nearest: function(color) {
-      var vboxes = this.vboxes,
-        d1,
-        d2,
-        pColor;
-      for (var i = 0; i < vboxes.size(); i++) {
-        d2 = Math.sqrt(
-          Math.pow(color[0] - vboxes.peek(i).color[0], 2) +
-            Math.pow(color[1] - vboxes.peek(i).color[1], 2) +
-            Math.pow(color[2] - vboxes.peek(i).color[2], 2)
-        );
-        if (d2 < d1 || d1 === undefined) {
-          d1 = d2;
-          pColor = vboxes.peek(i).color;
-        }
-      }
-      return pColor;
-    },
-    forcebw: function() {
-      // XXX: won't  work yet
-      var vboxes = this.vboxes;
-      vboxes.sort(function(a, b) {
-        return pv.naturalOrder(pv.sum(a.color), pv.sum(b.color));
-      });
 
-      // force darkest color to black if everything < 5
-      var lowest = vboxes[0].color;
-      if (lowest[0] < 5 && lowest[1] < 5 && lowest[2] < 5)
-        vboxes[0].color = [0, 0, 0];
+  push(vbox: VBox): void {
+    this.vboxes.push({
+      vbox: vbox,
+      color: vbox.avg()
+    });
+  }
 
-      // force lightest color to white if everything > 251
-      var idx = vboxes.length - 1,
-        highest = vboxes[idx].color;
-      if (highest[0] > 251 && highest[1] > 251 && highest[2] > 251)
-        vboxes[idx].color = [255, 255, 255];
+  palette(): Color[] {
+    return this.vboxes.map(function(vb) {
+      return vb.color;
+    });
+  }
+
+  size(): number {
+    return this.vboxes.size();
+  }
+
+  map(color: Color): Color {
+    const { vboxes } = this;
+
+    for (let i = 0; i < vboxes.size(); i++) {
+      if (vboxes.peek(i).vbox.contains(color)) {
+        return vboxes.peek(i).color;
+      }
     }
-  };
 
+    return this.nearest(color);
+  }
+
+  nearest(color: Color): Color {
+    const { vboxes } = this;
+    let d1: number;
+    let pColor: Color;
+
+    for (var i = 0; i < vboxes.size(); i++) {
+      const d2 = Math.sqrt(
+        Math.pow(color[0] - vboxes.peek(i).color[0], 2) +
+          Math.pow(color[1] - vboxes.peek(i).color[1], 2) +
+          Math.pow(color[2] - vboxes.peek(i).color[2], 2)
+      );
+
+      if (d2 < d1 || d1 === undefined) {
+        d1 = d2;
+        pColor = vboxes.peek(i).color;
+      }
+    }
+
+    return pColor;
+  }
+
+  forcebw() {
+    // XXX: won't  work yet
+    const { vboxes } = this;
+
+    vboxes.sort(function(a, b) {
+      return pv.naturalOrder(pv.sum(a.color), pv.sum(b.color));
+    });
+
+    // force darkest color to black if everything < 5
+    const lowest = vboxes[0].color;
+    if (lowest[0] < 5 && lowest[1] < 5 && lowest[2] < 5) {
+      vboxes[0].color = [0, 0, 0];
+    }
+
+    // force lightest color to white if everything > 251
+    const idx = vboxes.length - 1;
+    const highest = vboxes[idx].color;
+
+    if (highest[0] > 251 && highest[1] > 251 && highest[2] > 251) {
+      vboxes[idx].color = [255, 255, 255];
+    }
+  }
+}
+
+var MMCQ = (function() {
   // histo (1-d array, giving the number of pixels in
   // each quantized region of color space), or null on error
 
@@ -474,7 +497,7 @@ var MMCQ = (function() {
 
     // get the beginning vbox from the colors
     var vbox = vboxFromPixels(pixels, histo),
-      pq = new PQueue(function(a, b) {
+      pq: PQueue<VBox> = new PQueue(function(a, b) {
         return pv.naturalOrder(a.count(), b.count());
       });
     pq.push(vbox);
@@ -521,7 +544,7 @@ var MMCQ = (function() {
     // console.log(pq.size(), pq.debug().length, pq.debug().slice());
 
     // Re-sort by the product of pixel occupancy times the size in color space.
-    var pq2 = new PQueue(function(a, b) {
+    var pq2: PQueue<VBox> = new PQueue(function(a, b) {
       return pv.naturalOrder(a.count() * a.volume(), b.count() * b.volume());
     });
     while (pq.size()) {
