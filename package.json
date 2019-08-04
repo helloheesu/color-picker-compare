@@ -5,9 +5,11 @@
   "author": "helloheesu",
   "license": "ISC",
   "scripts": {
-    "start": "parcel src/index.html --open"
+    "start": "parcel src/index.html --open",
+    "test": "jest"
   },
   "devDependencies": {
+    "@types/jest": "^24.0.16",
     "@typescript-eslint/eslint-plugin": "^1.13.0",
     "@typescript-eslint/parser": "^1.13.0",
     "eslint": "^5.16.0",
@@ -22,6 +24,7 @@
     "parcel-bundler": "^1.12.3",
     "prettier": "1.18.2",
     "rgbaster": "^2.1.1",
+    "ts-jest": "^24.0.2",
     "typescript": "^3.5.3"
   },
   "husky": {
