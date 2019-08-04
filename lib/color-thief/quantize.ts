@@ -52,6 +52,19 @@ var newPixels = myPixels.map(function(p) {
  
  */
 
+// private constants
+
+const sigbits = 5;
+const rshift = 8 - sigbits;
+const maxIterations = 1000;
+const fractByPopulations = 0.75;
+
+// get reduced-space color index for a pixel
+
+const getColorIndex = (r: number, g: number, b: number): number => {
+  return (r << (2 * sigbits)) + (g << sigbits) + b;
+};
+
 // Simple priority queue
 
 interface CompareFunc<T> {
@@ -110,131 +123,122 @@ class PQueue<E> {
   }
 }
 
-var MMCQ = (function() {
-  // private constants
-  var sigbits = 5,
-    rshift = 8 - sigbits,
-    maxIterations = 1000,
-    fractByPopulations = 0.75;
+// 3d color space box
 
-  // get reduced-space color index for a pixel
+type Histo = number;
 
-  function getColorIndex(r, g, b) {
-    return (r << (2 * sigbits)) + (g << sigbits) + b;
-  }
+class VBox {
+  _volume: number;
+  _count_set: boolean;
+  _count: number;
+  _avg: number[];
 
-  // 3d color space box
+  constructor(
+    private r1: number,
+    private r2: number,
+    private g1: number,
+    private g2: number,
+    private b1: number,
+    private b2: number,
+    private histo: Histo
+  ) {}
 
-  function VBox(r1, r2, g1, g2, b1, b2, histo) {
-    var vbox = this;
-    vbox.r1 = r1;
-    vbox.r2 = r2;
-    vbox.g1 = g1;
-    vbox.g2 = g2;
-    vbox.b1 = b1;
-    vbox.b2 = b2;
-    vbox.histo = histo;
-  }
-  VBox.prototype = {
-    volume: function(force) {
-      var vbox = this;
-      if (!vbox._volume || force) {
-        vbox._volume =
-          (vbox.r2 - vbox.r1 + 1) *
-          (vbox.g2 - vbox.g1 + 1) *
-          (vbox.b2 - vbox.b1 + 1);
-      }
-      return vbox._volume;
-    },
-    count: function(force) {
-      var vbox = this,
-        histo = vbox.histo;
-      if (!vbox._count_set || force) {
-        var npix = 0,
-          i,
-          j,
-          k,
-          index;
-        for (i = vbox.r1; i <= vbox.r2; i++) {
-          for (j = vbox.g1; j <= vbox.g2; j++) {
-            for (k = vbox.b1; k <= vbox.b2; k++) {
-              index = getColorIndex(i, j, k);
-              npix += histo[index] || 0;
-            }
-          }
-        }
-        vbox._count = npix;
-        vbox._count_set = true;
-      }
-      return vbox._count;
-    },
-    copy: function() {
-      var vbox = this;
-      return new VBox(
-        vbox.r1,
-        vbox.r2,
-        vbox.g1,
-        vbox.g2,
-        vbox.b1,
-        vbox.b2,
-        vbox.histo
-      );
-    },
-    avg: function(force) {
-      var vbox = this,
-        histo = vbox.histo;
-      if (!vbox._avg || force) {
-        var ntot = 0,
-          mult = 1 << (8 - sigbits),
-          rsum = 0,
-          gsum = 0,
-          bsum = 0,
-          hval,
-          i,
-          j,
-          k,
-          histoindex;
-        for (i = vbox.r1; i <= vbox.r2; i++) {
-          for (j = vbox.g1; j <= vbox.g2; j++) {
-            for (k = vbox.b1; k <= vbox.b2; k++) {
-              histoindex = getColorIndex(i, j, k);
-              hval = histo[histoindex] || 0;
-              ntot += hval;
-              rsum += hval * (i + 0.5) * mult;
-              gsum += hval * (j + 0.5) * mult;
-              bsum += hval * (k + 0.5) * mult;
-            }
-          }
-        }
-        if (ntot) {
-          vbox._avg = [~~(rsum / ntot), ~~(gsum / ntot), ~~(bsum / ntot)];
-        } else {
-          //console.log('empty box');
-          vbox._avg = [
-            ~~((mult * (vbox.r1 + vbox.r2 + 1)) / 2),
-            ~~((mult * (vbox.g1 + vbox.g2 + 1)) / 2),
-            ~~((mult * (vbox.b1 + vbox.b2 + 1)) / 2)
-          ];
-        }
-      }
-      return vbox._avg;
-    },
-    contains: function(pixel) {
-      var vbox = this,
-        rval = pixel[0] >> rshift;
-      gval = pixel[1] >> rshift;
-      bval = pixel[2] >> rshift;
-      return (
-        rval >= vbox.r1 &&
-        rval <= vbox.r2 &&
-        gval >= vbox.g1 &&
-        gval <= vbox.g2 &&
-        bval >= vbox.b1 &&
-        bval <= vbox.b2
-      );
+  volume(force): number {
+    if (!this._volume || force) {
+      this._volume =
+        (this.r2 - this.r1 + 1) *
+        (this.g2 - this.g1 + 1) *
+        (this.b2 - this.b1 + 1);
     }
-  };
 
+    return this._volume;
+  }
+
+  count(force) {
+    if (!this._count_set || force) {
+      let npix = 0;
+
+      for (let i = this.r1; i <= this.r2; i++) {
+        for (let j = this.g1; j <= this.g2; j++) {
+          for (let k = this.b1; k <= this.b2; k++) {
+            const index = getColorIndex(i, j, k);
+            npix += this.histo[index] || 0;
+          }
+        }
+      }
+
+      this._count = npix;
+      this._count_set = true;
+    }
+
+    return this._count;
+  }
+
+  copy() {
+    return new VBox(
+      this.r1,
+      this.r2,
+      this.g1,
+      this.g2,
+      this.b1,
+      this.b2,
+      this.histo
+    );
+  }
+
+  avg(force) {
+    if (!this._avg || force) {
+      let ntot = 0;
+      let mult = 1 << (8 - sigbits);
+      let rsum = 0;
+      let gsum = 0;
+      let bsum = 0;
+
+      for (let i = this.r1; i <= this.r2; i++) {
+        for (let j = this.g1; j <= this.g2; j++) {
+          for (let k = this.b1; k <= this.b2; k++) {
+            const histoindex = getColorIndex(i, j, k);
+            const hval = this.histo[histoindex] || 0;
+            ntot += hval;
+            rsum += hval * (i + 0.5) * mult;
+            gsum += hval * (j + 0.5) * mult;
+            bsum += hval * (k + 0.5) * mult;
+          }
+        }
+      }
+
+      if (ntot) {
+        this._avg = [~~(rsum / ntot), ~~(gsum / ntot), ~~(bsum / ntot)];
+      } else {
+        //console.log('empty box');
+        this._avg = [
+          ~~((mult * (this.r1 + this.r2 + 1)) / 2),
+          ~~((mult * (this.g1 + this.g2 + 1)) / 2),
+          ~~((mult * (this.b1 + this.b2 + 1)) / 2)
+        ];
+      }
+    }
+
+    return this._avg;
+  }
+
+  contains(pixel: Color) {
+    const rval = pixel[0] >> rshift;
+    const gval = pixel[1] >> rshift;
+    const bval = pixel[2] >> rshift;
+
+    return (
+      rval >= this.r1 &&
+      rval <= this.r2 &&
+      gval >= this.g1 &&
+      gval <= this.g2 &&
+      bval >= this.b1 &&
+      bval <= this.b2
+    );
+  }
+}
+
+var MMCQ = (function() {
   // Color map
 
   function CMap() {
