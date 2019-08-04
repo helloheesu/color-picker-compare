@@ -51,6 +51,65 @@ var newPixels = myPixels.map(function(p) {
 });
  
  */
+
+// Simple priority queue
+
+interface CompareFunc<T> {
+  (a: T, b: T): number;
+}
+interface MapFunc<T, U> {
+  (value: T, index: number, array: T[]): U;
+}
+
+class PQueue<E> {
+  private contents: Array<E>;
+  private sorted: boolean;
+
+  constructor(private comparator: CompareFunc<E>) {
+    this.contents = [];
+    this.sorted = false;
+  }
+
+  private sort(): void {
+    this.contents.sort(this.comparator);
+    this.sorted = true;
+  }
+
+  push(o: E): void {
+    this.contents.push(o);
+    this.sorted = false;
+  }
+
+  peek(index: number = this.contents.length - 1): E {
+    if (!this.sorted) {
+      this.sort();
+    }
+    return this.contents[index];
+  }
+
+  pop(): E {
+    if (!this.sorted) {
+      this.sort();
+    }
+    return this.contents.pop();
+  }
+
+  size(): number {
+    return this.contents.length;
+  }
+
+  map(f: MapFunc<E, any>): Array<any> {
+    return this.contents.map(f);
+  }
+
+  debug(): Array<E> {
+    if (!this.sorted) {
+      this.sort();
+    }
+    return this.contents;
+  }
+}
+
 var MMCQ = (function() {
   // private constants
   var sigbits = 5,
@@ -62,44 +121,6 @@ var MMCQ = (function() {
 
   function getColorIndex(r, g, b) {
     return (r << (2 * sigbits)) + (g << sigbits) + b;
-  }
-
-  // Simple priority queue
-
-  function PQueue(comparator) {
-    var contents = [],
-      sorted = false;
-
-    function sort() {
-      contents.sort(comparator);
-      sorted = true;
-    }
-
-    return {
-      push: function(o) {
-        contents.push(o);
-        sorted = false;
-      },
-      peek: function(index) {
-        if (!sorted) sort();
-        if (index === undefined) index = contents.length - 1;
-        return contents[index];
-      },
-      pop: function() {
-        if (!sorted) sort();
-        return contents.pop();
-      },
-      size: function() {
-        return contents.length;
-      },
-      map: function(f) {
-        return contents.map(f);
-      },
-      debug: function() {
-        if (!sorted) sort();
-        return contents;
-      }
-    };
   }
 
   // 3d color space box
