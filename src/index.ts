@@ -53,17 +53,50 @@ Object.keys(libraries).forEach((name: string) => {
   librarySelector.appendChild(wrapper);
 });
 
+const drawImageOnCanvas = (
+  canvas: HTMLCanvasElement,
+  img: HTMLImageElement,
+  color: string = "black"
+) => {
+  const { width } = canvas;
+  const ctx = canvas.getContext("2d");
+  const { width: imgWidth, height: imgHeight } = img;
+
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, width, width);
+
+  let resultWidth: number, resultHeight: number, diff: number;
+  if (imgWidth > imgHeight) {
+    resultWidth = width;
+    resultHeight = (imgHeight / imgWidth) * resultWidth;
+    diff = width - resultHeight;
+
+    ctx.drawImage(img, 0, diff / 2, resultWidth, resultHeight);
+  } else {
+    resultHeight = width;
+    resultWidth = (imgWidth / imgHeight) * resultHeight;
+    diff = width - resultHeight;
+
+    ctx.drawImage(img, diff / 2, 0, resultWidth, resultHeight);
+  }
+};
+
 const convertAndAppend = (file: File) => {
   getDataUrl(file)
     .then((src: string) => getImage(src))
     .then(async (img: HTMLImageElement) => {
       const container = document.createElement("div");
       const list = document.createElement("ul");
+      const canvas = document.createElement("canvas");
 
-      container.appendChild(img);
+      container.appendChild(canvas);
       container.appendChild(list);
 
       imageListContainer.appendChild(container);
+
+      const width: number = container.offsetWidth;
+      canvas.width = width;
+      canvas.height = width;
 
       const checkedInputList = librarySelector.querySelectorAll(
         "input:checked"
@@ -77,6 +110,8 @@ const convertAndAppend = (file: File) => {
         const item = createItem(color, name, time);
         list.appendChild(item);
       });
+
+      drawImageOnCanvas(canvas, img);
     })
     .catch(() => {
       alert("inappropriate file");
