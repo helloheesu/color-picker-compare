@@ -29,9 +29,13 @@
   <body>
     <h1>🎊 Color Picker Contest 🎊</h1>
     <div class="library-options"></div>
-    <div class="drop-zone">
-      <p>Drop Image Here</p>
-    </div>
+    <label for="input-file">
+      <div class="drop-zone">
+        <p>Drop Image Here</p>
+        <p>OR</p>
+        <p><input id="input-file" type="file" multiple /></p>
+      </div>
+    </label>
     <div class="image-list"></div>
     <script src="./index.ts"></script>
   </body>

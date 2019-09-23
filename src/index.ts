@@ -53,7 +53,7 @@ Object.keys(libraries).forEach((name: string) => {
   librarySelector.appendChild(wrapper);
 });
 
-init(".drop-zone", (file: File) => {
+const convertAndAppend = (file: File) => {
   getDataUrl(file)
     .then((src: string) => getImage(src))
     .then(async (img: HTMLImageElement) => {
@@ -81,4 +81,15 @@ init(".drop-zone", (file: File) => {
     .catch(() => {
       alert("inappropriate file");
     });
+};
+
+init(".drop-zone", convertAndAppend);
+
+const input: HTMLInputElement = document.querySelector(
+  ".drop-zone input[type=file]"
+);
+
+input.addEventListener("change", e => {
+  const { files } = e.target as HTMLInputElement;
+  Array.from(files).forEach(file => convertAndAppend(file));
 });
