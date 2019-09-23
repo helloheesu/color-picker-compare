@@ -109,6 +109,10 @@ const convertAndAppend = (file: File) => {
         const { color, time } = await getColor(name, img);
         const item = createItem(color, name, time);
         list.appendChild(item);
+
+        item.addEventListener("click", () => {
+          drawImageOnCanvas(canvas, img, color);
+        });
       });
 
       drawImageOnCanvas(canvas, img);
