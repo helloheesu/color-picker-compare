@@ -94,7 +94,7 @@ const convertAndAppend = (file: File) => {
 
       imageListContainer.appendChild(container);
 
-      const width: number = container.offsetWidth;
+      const width: number = img.width;
       canvas.width = width;
       canvas.height = width;
 
