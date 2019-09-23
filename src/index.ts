@@ -1,5 +1,6 @@
 import { init, getDataUrl, getImage } from "./dropzone";
 import { libraries } from "../lib";
+import CanvasModel from "./Canvas";
 
 const imageListContainer = document.querySelector(".image-list");
 
@@ -53,50 +54,20 @@ Object.keys(libraries).forEach((name: string) => {
   librarySelector.appendChild(wrapper);
 });
 
-const drawImageOnCanvas = (
-  canvas: HTMLCanvasElement,
-  img: HTMLImageElement,
-  color: string = "black"
-) => {
-  const { width } = canvas;
-  const ctx = canvas.getContext("2d");
-  const { width: imgWidth, height: imgHeight } = img;
-
-  ctx.fillStyle = color;
-  ctx.fillRect(0, 0, width, width);
-
-  let resultWidth: number, resultHeight: number, diff: number;
-  if (imgWidth > imgHeight) {
-    resultWidth = width;
-    resultHeight = (imgHeight / imgWidth) * resultWidth;
-    diff = width - resultHeight;
-
-    ctx.drawImage(img, 0, diff / 2, resultWidth, resultHeight);
-  } else {
-    resultHeight = width;
-    resultWidth = (imgWidth / imgHeight) * resultHeight;
-    diff = width - resultHeight;
-
-    ctx.drawImage(img, diff / 2, 0, resultWidth, resultHeight);
-  }
-};
-
 const convertAndAppend = (file: File) => {
   getDataUrl(file)
     .then((src: string) => getImage(src))
     .then(async (img: HTMLImageElement) => {
       const container = document.createElement("div");
       const list = document.createElement("ul");
-      const canvas = document.createElement("canvas");
+      const canvas = new CanvasModel(img);
 
-      container.appendChild(canvas);
+      container.appendChild(canvas.canvas);
       container.appendChild(list);
 
       imageListContainer.appendChild(container);
 
-      const width: number = img.width;
-      canvas.width = width;
-      canvas.height = width;
+      canvas.changeBackgroundColor("black");
 
       const checkedInputList = librarySelector.querySelectorAll(
         "input:checked"
@@ -111,13 +82,12 @@ const convertAndAppend = (file: File) => {
         list.appendChild(item);
 
         item.addEventListener("click", () => {
-          drawImageOnCanvas(canvas, img, color);
+          canvas.changeBackgroundColor(color);
         });
       });
-
-      drawImageOnCanvas(canvas, img);
     })
-    .catch(() => {
+    .catch(e => {
+      console.log(e);
       alert("inappropriate file");
     });
 };
