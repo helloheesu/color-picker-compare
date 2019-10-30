@@ -73,7 +73,7 @@ class CanvasModel {
       this.drawnHeight = size;
       this.drawnWidth = (this.originalWidth / this.originalHeight) * size;
 
-      const diff = size - this.drawnHeight;
+      const diff = size - this.drawnWidth;
       this.drawnX = diff / 2;
       this.drawnY = 0;
     }
